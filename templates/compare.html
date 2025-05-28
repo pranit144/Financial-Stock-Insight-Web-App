@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Stocks | StockInsight Pro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            border-bottom: 4px solid var(--accent-color);
+        }
+
+        .header h1 {
+            font-weight: 700;
+            margin: 0;
+            font-size: 2.2rem;
+        }
+
+        .header p {
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .content-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+
+        .stock-selection {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .btn-compare {
+            background-color: var(--accent-color);
+            border: none;
+            font-weight: 600;
+            padding: 10px 25px;
+            transition: all 0.3s;
+        }
+
+        .btn-compare:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .comparison-table th {
+            background-color: var(--light-bg);
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+            position: sticky;
+            top: 0;
+        }
+
+        .comparison-table td {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .comparison-table tr:hover {
+            background-color: #f2f8ff;
+        }
+
+        .metric-name {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .navbar-custom {
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .navbar-custom .nav-link {
+            font-weight: 600;
+            color: var(--secondary-color);
+            padding: 10px 16px;
+        }
+
+        .navbar-custom .nav-link.active {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .navbar-custom .nav-link:hover {
+            color: var(--accent-color);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--accent-color);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 0;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .content-container, .stock-selection {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-chart-line me-2"></i>StockInsight Pro</h1>
+                    <p>Comprehensive financial analysis powered by AI</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-robot me-1"></i> Powered by Groq LLama3
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-custom rounded">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home me-1"></i> Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/compare">
+                                <i class="fas fa-balance-scale me-1"></i> Compare Stocks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/about">
+                                <i class="fas fa-info-circle me-1"></i> About
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="stock-selection">
+            <h2 class="mb-4"><i class="fas fa-balance-scale me-2"></i>Compare Stocks</h2>
+            <form action="/compare" method="GET" id="compareForm">
+                <div class="row">
+                    <div class="col-md-10">
+                        <div class="form-group">
+                            <label for="stockSelector" class="form-label">Select stocks to compare (up to 5):</label>
+                            <select class="form-select" id="stockSelector" name="tickers" multiple size="5">
+                                {% for stock in all_stocks %}
+                                <option value="{{ stock.ticker }}" {% if stock.ticker in tickers %}selected{% endif %}>
+                                    {{ stock.ticker }} - {{ stock.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Ctrl+click (or Cmd+click on Mac) to select multiple stocks.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-grid mt-4">
+                        <button type="submit" class="btn btn-compare" id="compareBtn">
+                            <i class="fas fa-sync me-2"></i>Compare
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Gathering comparison data... Please wait.</p>
+        </div>
+
+        {% if comparison_data %}
+        <div class="content-container">
+            <h3 class="mb-4">Price Comparison</h3>
+            <div class="chart-container">
+                <canvas id="priceComparisonChart"></canvas>
+            </div>
+
+            <h3 class="mb-4">Volume Comparison</h3>
+            <div class="chart-container">
+                <canvas id="volumeComparisonChart"></canvas>
+            </div>
+
+            <h3 class="mb-4">Metrics Comparison</h3>
+            <div class="table-responsive">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            {% for ticker in tickers %}
+                            <th>{{ ticker }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="metric-name">52-Week High</td>
+                            {% for ticker in tickers %}
+                            <td id="high52week-{{ ticker }}">Loading...</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="metric-name">52-Week Low</td>
+                            {% for ticker in tickers %}
+                            <td id="low52week-{{ ticker }}">Loading...</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="metric-name">Market Cap</td>
+                            {% for ticker in tickers %}
+                            <td id="marketCap-{{ ticker }}">Loading...</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="metric-name">P/E Ratio</td>
+                            {% for ticker in tickers %}
+                            <td id="peRatio-{{ ticker }}">Loading...</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="metric-name">Average Volume</td>
+                            {% for ticker in tickers %}
+                            <td id="avgVolume-{{ ticker }}">Loading...</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td class="metric-name">Dividend Yield</td>
+                            {% for ticker in tickers %}
+                            <td id="dividendYield-{{ ticker }}">Loading...</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if comparison_data %}
+    <script>
+        // Parse data from server
+        const comparisonData = {{ comparison_data|safe }};
+        const tickers = {{ tickers|tojson }};
+
+        // Generate random colors for each ticker
+        function generateColors(count) {
+            const colors = [
+                { border: '#3498db', background: 'rgba(52, 152, 219, 0.1)' },
+                { border: '#e74c3c', background: 'rgba(231, 76, 60, 0.1)' },
+                { border: '#2ecc71', background: 'rgba(46, 204, 113, 0.1)' },
+                { border: '#f39c12', background: 'rgba(243, 156, 18, 0.1)' },
+                { border: '#9b59b6', background: 'rgba(155, 89, 182, 0.1)' }
+            ];
+
+            return colors.slice(0, count);
+        }
+
+        // Get colors for tickers
+        const colors = generateColors(tickers.length);
+
+        // Create datasets for price comparison
+        const priceDateLabels = comparisonData[tickers[0]].dates;
+        const priceDatasets = tickers.map((ticker, index) => {
+            return {
+                label: ticker,
+                data: comparisonData[ticker].prices,
+                borderColor: colors[index].border,
+                backgroundColor: colors[index].background,
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                fill: false,
+                tension: 0.1
+            };
+        });
+
+        // Create price comparison chart
+        const priceCtx = document.getElementById('priceComparisonChart').getContext('2d');
+        const priceChart = new Chart(priceCtx, {
+            type: 'line',
+            data: {
+                labels: priceDateLabels,
+                datasets: priceDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    title: {
+                        display: true,
+                        text: '5-Month Price Comparison (Normalized)'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Create datasets for volume comparison
+        const volumeDatasets = tickers.map((ticker, index) => {
+            return {
+                label: ticker,
+                data: comparisonData[ticker].volumes,
+                backgroundColor: colors[index].background,
+                borderColor: colors[index].border,
+                borderWidth: 1
+            };
+        });
+
+        // Create volume comparison chart
+        const volumeCtx = document.getElementById('volumeComparisonChart').getContext('2d');
+        const volumeChart = new Chart(volumeCtx, {
+            type: 'line',
+            data: {
+                labels: priceDateLabels,
+                datasets: volumeDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: '5-Month Volume Comparison'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Fill comparison table with metrics
+        tickers.forEach(ticker => {
+            const metrics = comparisonData[ticker].metrics;
+            document.getElementById(`high52week-${ticker}`).textContent = metrics.high_52week;
+            document.getElementById(`low52week-${ticker}`).textContent = metrics.low_52week;
+            document.getElementById(`marketCap-${ticker}`).textContent = metrics.market_cap;
+            document.getElementById(`peRatio-${ticker}`).textContent = metrics.pe_ratio;
+            document.getElementById(`avgVolume-${ticker}`).textContent = metrics.avg_volume;
+            document.getElementById(`dividendYield-${ticker}`).textContent = metrics.dividend_yield;
+        });
+    </script>
+    {% endif %}
+
+    <script>
+        // Add loading indicator
+        document.getElementById('compareForm').addEventListener('submit', function(e) {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('compareBtn').disabled = true;
+            document.getElementById('compareBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+        });
+    </script>
+</body>
+</html>

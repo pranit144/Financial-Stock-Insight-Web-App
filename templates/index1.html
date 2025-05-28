@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Candlestick Chart</title>
+</head>
+<body>
+    <h1>Stock Market Candlestick Graph</h1>
+    <form method="POST">
+        <label>Stock Symbol:</label>
+        <input type="text" name="symbol" value="AAPL"><br><br>
+        <label>From Date:</label>
+        <input type="date" name="date_from" required><br><br>
+        <label>To Date:</label>
+        <input type="date" name="date_to" required><br><br>
+        <input type="submit" value="Get Chart">
+    </form>
+
+    {% if chart %}
+        <hr>
+        <h2>Candlestick Chart</h2>
+        {{ chart|safe }}
+    {% endif %}
+</body>
+</html>

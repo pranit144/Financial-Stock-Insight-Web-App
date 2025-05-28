@@ -1,0 +1,9 @@
+phidata
+python-dotenv
+yfinance
+packaging         # Corrected typo from 'packageing' to 'packaging'
+duckduckgo-search
+fastapi
+uvicorn
+groq
+openai

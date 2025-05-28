@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 StockInsight Pro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            border-bottom: 4px solid var(--accent-color);
+        }
+
+        .header h1 {
+            font-weight: 700;
+            margin: 0;
+            font-size: 2.2rem;
+        }
+
+        .header p {
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .search-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .btn-analyze {
+            background-color: var(--accent-color);
+            border: none;
+            font-weight: 600;
+            padding: 10px 25px;
+            transition: all 0.3s;
+        }
+
+        .btn-analyze:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .stock-input {
+            font-size: 1.1rem;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .stock-input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+
+        .results-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+        }
+
+        .nav-tabs {
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #495057;
+            font-weight: 600;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 0;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--accent-color);
+            background-color: transparent;
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .metrics-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .metrics-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .metrics-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .analysis-content {
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .analysis-content h1, .analysis-content h2, .analysis-content h3 {
+            color: var(--primary-color);
+            margin-top: 20px;
+        }
+
+        .analysis-content table {
+            width: 100%;
+            margin-bottom: 1rem;
+            border-collapse: collapse;
+        }
+
+        .analysis-content table th, .analysis-content table td {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .analysis-content table th {
+            background-color: #f8f9fa;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--accent-color);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 0;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .search-container, .results-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-chart-line me-2"></i>StockInsight Pro</h1>
+                    <p>Comprehensive financial analysis powered by AI</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-robot me-1"></i> Powered by Groq LLama3
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="search-container">
+            <form method="POST" id="stockForm">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-9">
+                        <label for="stock" class="form-label"><i class="fas fa-search me-2"></i>Enter Stock Ticker:</label>
+                        <input type="text" class="form-control stock-input" name="stock" id="stock" required
+                               placeholder="e.g., AAPL, TSLA, NVDA, AMZN" value="{{ stock }}">
+                    </div>
+                    <div class="col-md-3 d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-analyze btn-lg" id="analyzeBtn">
+                            <i class="fas fa-chart-bar me-2"></i>Analyze
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Analyzing financial data and news... Please wait.</p>
+        </div>
+
+        {% if error_message %}
+        <div class="container">
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>{{ error_message }}
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Ticker Symbol Tips</h5>
+                    <ul class="mb-0">
+                        <li>For US stocks, use symbols like: AAPL, MSFT, GOOGL, AMZN</li>
+                        <li>For Indian stocks, try adding ".NS" (NSE) or ".BO" (BSE): RELIANCE.NS, HDFCBANK.NS, TCS.NS</li>
+                        <li>For ETFs, use symbols like: SPY, QQQ, VTI</li>
+                        <li>For cryptocurrencies, try: BTC-USD, ETH-USD</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if trend_data %}
+        <div class="results-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-line me-2"></i>{{ stock }} Analysis</h2>
+                <div>
+                    <span class="badge bg-primary">Last Updated: {{ now }}</span>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab" aria-controls="charts" aria-selected="true">
+                        <i class="fas fa-chart-area me-2"></i>Charts
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab" aria-controls="analysis" aria-selected="false">
+                        <i class="fas fa-file-alt me-2"></i>Analysis
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="metrics-tab" data-bs-toggle="tab" data-bs-target="#metrics" type="button" role="tab" aria-controls="metrics" aria-selected="false">
+                        <i class="fas fa-tachometer-alt me-2"></i>Key Metrics
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="analysisTabsContent">
+                <!-- Charts Tab -->
+                <div class="tab-pane fade show active" id="charts" role="tabpanel" aria-labelledby="charts-tab">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="chart-container">
+                                <canvas id="priceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="chart-container" style="height: 250px;">
+                                <canvas id="volumeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Tab -->
+                <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
+                    <div class="analysis-content" id="analysisContent">
+                        <!-- Content will be rendered from markdown -->
+                    </div>
+                </div>
+
+                <!-- Metrics Tab -->
+                <div class="tab-pane fade" id="metrics" role="tabpanel" aria-labelledby="metrics-tab">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="metrics-card">
+                                <div class="metrics-title">52-Week High</div>
+                                <div class="metrics-value" id="high52week"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="metrics-card">
+                                <div class="metrics-title">52-Week Low</div>
+                                <div class="metrics-value" id="low52week"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="metrics-card">
+                                <div class="metrics-title">Market Cap</div>
+                                <div class="metrics-value" id="marketCap"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <div class="metrics-card">
+                                <div class="metrics-title">P/E Ratio</div>
+                                <div class="metrics-value" id="peRatio"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="metrics-card">
+                                <div class="metrics-title">Average Volume</div>
+                                <div class="metrics-value" id="avgVolume"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="metrics-card">
+                                <div class="metrics-title">Dividend Yield</div>
+                                <div class="metrics-value" id="dividendYield"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if trend_data %}
+    <script>
+        // Parse trend data from server
+        const trendData = {{ trend_data|safe }};
+
+        // Populate metrics
+        document.getElementById('high52week').textContent = trendData.metrics.high_52week;
+        document.getElementById('low52week').textContent = trendData.metrics.low_52week;
+        document.getElementById('marketCap').textContent = trendData.metrics.market_cap;
+        document.getElementById('peRatio').textContent = trendData.metrics.pe_ratio;
+        document.getElementById('avgVolume').textContent = trendData.metrics.avg_volume;
+        document.getElementById('dividendYield').textContent = trendData.metrics.dividend_yield;
+
+        // Render markdown content
+        const analysisContent = document.getElementById('analysisContent');
+        analysisContent.innerHTML = marked.parse(`{{ result|safe }}`);
+
+        // Create price chart
+        const priceCtx = document.getElementById('priceChart').getContext('2d');
+        const priceChart = new Chart(priceCtx, {
+            type: 'line',
+            data: {
+                labels: trendData.dates,
+                datasets: [{
+                    label: '{{ stock }} Price',
+                    data: trendData.prices,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    title: {
+                        display: true,
+                        text: '5-Month Price History'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Create volume chart
+        const volumeCtx = document.getElementById('volumeChart').getContext('2d');
+        const volumeChart = new Chart(volumeCtx, {
+            type: 'bar',
+            data: {
+                labels: trendData.dates,
+                datasets: [{
+                    label: 'Trading Volume',
+                    data: trendData.volumes,
+                    backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: '5-Month Volume History'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+    <script>
+        // Add loading indicator
+        document.getElementById('stockForm').addEventListener('submit', function(e) {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('analyzeBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analyzing...';
+
+            // If there was an error message, hide it when submitting a new query
+            const errorElements = document.getElementsByClassName('alert-warning');
+            if (errorElements.length > 0) {
+                errorElements[0].style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
