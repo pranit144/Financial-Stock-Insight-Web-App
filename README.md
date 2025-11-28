@@ -74,7 +74,10 @@ Users can explore historical stock price trends, key financial metrics, analyst 
    ```
    http://127.0.0.1:5001
    ```
-
+6. ** Download the  zip  for the  frontend  of the  page :**
+   ```
+   https://drive.google.com/file/d/17lKsp-PavXpO9A2YH-gFAebuCZfFA9Ot/view?usp=sharing
+   ```
 ---
 
 ## Usage Instructions
